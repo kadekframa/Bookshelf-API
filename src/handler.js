@@ -1,3 +1,4 @@
+const { response } = require("@hapi/hapi/lib/validation");
 const { nanoid } = require("nanoid");
 const books = require('./books');
 
@@ -172,7 +173,89 @@ const getBookByIdHandler = (request, h) => {
     
 };
 
+const editBookByIdHandler = (request, h) => {
+    const { bookId } = request.params;
 
+    const {
+        name,
+        year,
+        author,
+        summary,
+        publisher,
+        pageCount,
+        readPage,
+        reading,
+    } = request.payload;
+
+    if(!name){
+        const response = h.response({
+            status: 'fail',
+            message: "Gagal memperbarui buku. Mohon isi nama buku",
+        });
+        response.code(400);
+        return response;
+    }
+
+    if(readPage > pageCount){
+        const response = h.response({
+            status: 'fail',
+            message: "Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount",
+        });
+        response.code(400);
+        return response;
+    }
+
+    const indexId = books.findIndex((book) => book.id === bookId);
+
+    if(indexId !== -1){
+        books[indexId] = {
+            ...books[indexId],
+            name,
+            year,
+            author,
+            summary,
+            publisher,
+            pageCount,
+            readPage,
+            reading,
+        };
+
+        const response = h.response({
+            status: 'success',
+            message: "Buku berhasil diperbarui",
+        });
+        response.code(200);
+        return response;
+    }
+    const response = h.response({
+        status: 'fail',
+        message: "Gagal memperbarui buku. Id tidak ditemukan",
+    });
+    response.code(404);
+    return response;
 }
 
-module.exports = { addBookHandler, getAllBookHandler, getBookByIdHandler, editBookByIdHandler };
+const deleteBookByIdHanlder = (request,h) => {
+    const { bookId } = request.params;
+
+    const indexId = books.findIndex((book) => book.id === bookId);
+
+    if(indexId !== -1){
+        books.splice(indexId, 1);
+        const response = h.response({
+            status: 'success',
+            message: "Buku berhasil dihapus",
+        });
+        response.code(200);
+        return response;
+    }
+
+    const response = h.response({
+        status: 'fail',
+        message: "Buku gagal dihapus. Id tidak ditemukan",
+    });
+    response.code(404);
+    return response;
+}
+
+module.exports = { addBookHandler, getAllBookHandler, getBookByIdHandler, editBookByIdHandler, deleteBookByIdHanlder };
